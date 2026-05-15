@@ -174,18 +174,18 @@ export default function Home() {
         <meta property="og:title" content="ReelGrab – Free Instagram Reels Downloader" />
         <meta property="og:description" content="Download any public Instagram Reel in HD MP4 quality for free. No watermark, no login required." />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://reelgrab.app" />
+        <meta property="og:url" content="https://reel-grab-teal.vercel.app" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="ReelGrab – Free Instagram Reels Downloader" />
         <meta name="twitter:description" content="The fastest free Instagram Reels downloader. HD quality, no watermark." />
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-        <link rel="canonical" href="https://reelgrab.app" />
+        <link rel="canonical" href="https://reel-grab-teal.vercel.app" />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "WebApplication",
           "name": "ReelGrab",
           "description": "Free Instagram Reels downloader. Download any public Instagram Reel in HD MP4 quality without watermark.",
-          "url": "https://reelgrab.app",
+          "url": "https://reel-grab-teal.vercel.app",
           "applicationCategory": "UtilitiesApplication",
           "operatingSystem": "All",
           "offers": { "@type": "Offer", "price": "0" },

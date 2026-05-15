@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" fill="none">
+  <rect width="180" height="180" rx="40" fill="#07070f"/>
+  <rect x="4" y="4" width="172" height="172" rx="36" stroke="#00d4ff" stroke-width="6" fill="none" opacity="0.5"/>
+  <!-- Big download arrow -->
+  <path d="M90 44v68M90 112l-28-28M90 112l28-28" stroke="#00d4ff" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Bottom bar -->
+  <path d="M50 136h80" stroke="#ff5722" stroke-width="14" stroke-linecap="round"/>
+</svg>
