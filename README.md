@@ -1,74 +1,105 @@
 # ReelGrab — Instagram Reels Downloader
 
-A fast, clean, SEO-optimised Instagram Reels downloader built with Next.js, ready to deploy on Vercel in one click.
+Fast, clean Next.js Instagram Reels downloader. Deployed on Vercel.
 
-## Features
+---
 
-- Multi-strategy Instagram extraction (embed page → API param → main page HTML)
-- Server-side proxy download — works on all browsers including iOS Safari
-- Dark electric design with Bebas Neue + Plus Jakarta Sans
-- Fully mobile-responsive
-- 2,000+ words of SEO content
-- Structured data (JSON-LD) for rich search results
-- Ad placeholder slots (leaderboard, rectangle, banner)
-- 10-question FAQ with accordion
-- Zero personal data collection
+## ⚡ Get Downloads Working — 2 Minutes
 
-## Quick Deploy to Vercel
+Vercel's server IPs are datacenter IPs Instagram blocks outright.
+The solution (same one all major downloader sites use) is a RapidAPI layer.
 
-### Option 1 — Vercel CLI (recommended)
+### Step 1 — Free RapidAPI key
+
+1. Create free account at **https://rapidapi.com**
+2. Open: **https://rapidapi.com/herosAPI/api/instagram-scraper-api2**
+3. Click **Subscribe to Test** → pick **FREE plan** (500 req/month, no card needed)
+4. Right panel → **Header Parameters** → copy the `X-RapidAPI-Key` value
+
+### Step 2 — Add to Vercel
+
+Vercel Dashboard → **Settings → Environment Variables → Add New**
+
+| Name | Value |
+|---|---|
+| `RAPIDAPI_KEY` | your key from Step 1 |
+
+Then **Deployments → Redeploy**. Done — downloads work immediately.
+
+### Local dev
+
+```bash
+cp .env.local.example .env.local   # paste your key inside
+npm install
+npm run dev                         # http://localhost:3000
+```
+
+---
+
+## Deploy from scratch
 
 ```bash
 npm i -g vercel
-cd reelgrab
 npm install
-vercel
+vercel          # follow prompts, then add RAPIDAPI_KEY in dashboard
 ```
 
-Follow the prompts. Vercel auto-detects Next.js and configures everything.
+Or: push repo to GitHub → import in Vercel dashboard → add env var → deploy.
 
-### Option 2 — Vercel Dashboard
+---
 
-1. Push this folder to a GitHub/GitLab repo
-2. Go to [vercel.com](https://vercel.com) → New Project
-3. Import your repo
-4. Click Deploy (no env variables needed)
-
-### Option 3 — Local dev
-
-```bash
-npm install
-npm run dev
-# → http://localhost:3000
-```
-
-## Project Structure
+## Project structure
 
 ```
 reelgrab/
 ├── pages/
-│   ├── index.js          # Main page (hero, form, SEO, FAQ)
-│   ├── _app.js           # Global styles loader
-│   ├── _document.js      # HTML head (fonts, meta)
+│   ├── index.js              # Hero, search form, results, SEO content, FAQ
+│   ├── _app.js               # Global CSS
+│   ├── _document.js          # Fonts, Google Analytics, favicon, Search Console
+│   ├── sitemap.xml.js        # /sitemap.xml
+│   ├── robots.txt.js         # /robots.txt
 │   └── api/
-│       ├── download.js   # Instagram extraction API (3 strategies)
-│       └── proxy.js      # Video proxy (streams through our server)
-├── styles/
-│   └── globals.css       # All styles (dark theme, mobile-first)
-├── next.config.js
-├── vercel.json           # Function timeout config (30s)
+│       ├── download.js       # RapidAPI scraper — 3 strategies, auto-fallback
+│       └── proxy.js          # Streams video through server (fixes iOS Safari)
+├── styles/globals.css         # Full dark-theme CSS, mobile-first
+├── public/
+│   ├── favicon.svg
+│   ├── apple-touch-icon.png
+│   └── google030d394dae3fee69.html
+├── .env.local.example
+├── vercel.json               # 30s function timeout
 └── package.json
 ```
 
-## Adding Real Ads
+---
 
-Replace the `.ad-placeholder` divs in `pages/index.js` with your AdSense or preferred ad network tags:
+## How the download flow works
+
+```
+1. User pastes Reel URL → clicks Download
+2. POST /api/download  →  extract shortcode
+3. Call RapidAPI (instagram-scraper-api2)
+4.   └─ if that fails → try backup RapidAPI provider automatically
+5. Return { videoUrl, thumbnail } to the browser
+6. User clicks "Download MP4"
+7. GET /api/proxy?url=VIDEO_URL
+8. Proxy adds correct headers, forces download → file saved to device
+```
+
+The proxy step ensures downloads work on all browsers including iOS Safari,
+which refuses direct CDN downloads without correct Referer headers.
+
+---
+
+## Swap in real ads
+
+Replace the `ad-placeholder` divs in `pages/index.js`:
 
 ```jsx
-// Replace this:
+// swap this ↓
 <div className="ad-placeholder leaderboard">Advertisement</div>
 
-// With your ad tag, e.g. Google AdSense:
+// for this ↓
 <ins className="adsbygoogle"
   style={{ display: 'block' }}
   data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
@@ -77,36 +108,41 @@ Replace the `.ad-placeholder` divs in `pages/index.js` with your AdSense or pref
   data-full-width-responsive="true" />
 ```
 
-Load the AdSense script in `pages/_document.js` inside `<Head>`.
+Add the AdSense `<script>` tag in `pages/_document.js` inside `<Head>`.
 
-## Customisation
+---
 
-| File | What to change |
-|---|---|
-| `pages/index.js` | Site name, tagline, stats, features, FAQ content |
-| `styles/globals.css` | Colours (CSS variables at top of file), fonts |
-| `pages/_document.js` | Favicon, analytics scripts |
-| `pages/api/download.js` | Extraction strategies, headers |
-| `vercel.json` | Function timeout (max 30s on Hobby, 60s on Pro) |
+## Changing your domain
 
-## Changing the Brand Name
+If you move off Vercel's subdomain, find-replace `reel-grab-teal.vercel.app` in:
+- `pages/index.js` (3 places — canonical + JSON-LD)
+- `pages/sitemap.xml.js`
+- `pages/robots.txt.js`
 
-Search and replace `ReelGrab` / `REELGRAB` / `reelgrab` in:
-- `pages/index.js` (title, meta, footer)
-- `pages/api/proxy.js` (filename in Content-Disposition)
-- `package.json` (name field)
+---
 
-## SEO Notes
+## RapidAPI limits
 
-- Update the canonical URL in `pages/index.js` Head from `https://reelgrab.app` to your actual domain
-- Set up Google Search Console and submit the sitemap
-- Add `pages/sitemap.xml.js` for a dynamic sitemap (optional)
-- The JSON-LD structured data is already configured for WebApplication schema
+| Plan | Requests | Cost |
+|---|---|---|
+| Free | 500/month | $0 |
+| Basic | 5,000/month | ~$9 |
+| Pro | 50,000/month | ~$29 |
+
+Upgrade in the RapidAPI dashboard — no code changes needed, same key.
+If you want to switch providers, update the host/endpoint in `pages/api/download.js`.
+
+---
+
+## Environment variables
+
+| Variable | Required | Where to get it |
+|---|---|---|
+| `RAPIDAPI_KEY` | ✅ | rapidapi.com → your app → Header Parameters |
+
+---
 
 ## Legal
 
-This tool is provided for personal, lawful use only. Downloading third-party Instagram content without the creator's permission may violate copyright law and Instagram's Terms of Service. Add/update the Privacy Policy and Terms pages before going live.
-
-## License
-
-MIT — do whatever you want, just don't be evil.
+Personal, lawful use only. Create `/pages/privacy.js` and `/pages/terms.js` before launch.
+ReelGrab is not affiliated with Instagram or Meta Platforms, Inc.

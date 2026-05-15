@@ -103,6 +103,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [isSetupError, setIsSetupError] = useState(false);
   const inputRef = useRef(null);
   const resultRef = useRef(null);
 
@@ -115,6 +116,7 @@ export default function Home() {
     setLoading(true);
     setError(null);
     setResult(null);
+    setIsSetupError(false);
 
     try {
       const res = await fetch('/api/download', {
@@ -123,7 +125,10 @@ export default function Home() {
         body: JSON.stringify({ url: trimmed }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Something went wrong.');
+      if (!res.ok) {
+        if (res.status === 503) setIsSetupError(true);
+        throw new Error(json.error || 'Something went wrong.');
+      }
       setResult(json.data);
       setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
     } catch (err) {
@@ -258,10 +263,22 @@ export default function Home() {
             {/* ── RESULT ───────────────────────────────────────────────── */}
             <div ref={resultRef} className="result-area" aria-live="polite">
               {error && (
-                <div className="error-box" role="alert">
-                  <IconAlert />
-                  <span>{error}</span>
-                </div>
+                isSetupError ? (
+                  <div className="setup-box" role="alert">
+                    <div className="setup-box__title">⚙️ One-time setup needed</div>
+                    <p>Add <strong>RAPIDAPI_KEY</strong> to your Vercel Environment Variables and redeploy.</p>
+                    <ol>
+                      <li>Get free key at <a href="https://rapidapi.com/herosAPI/api/instagram-scraper-api2" target="_blank" rel="noopener noreferrer">rapidapi.com</a></li>
+                      <li>Vercel → Settings → Environment Variables → add <code>RAPIDAPI_KEY</code></li>
+                      <li>Deployments → Redeploy</li>
+                    </ol>
+                  </div>
+                ) : (
+                  <div className="error-box" role="alert">
+                    <IconAlert />
+                    <span>{error}</span>
+                  </div>
+                )
               )}
 
               {result && (
