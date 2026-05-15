@@ -1,0 +1,6 @@
+{
+  "functions": {
+    "pages/api/download.js": { "maxDuration": 30 },
+    "pages/api/proxy.js": { "maxDuration": 30 }
+  }
+}
