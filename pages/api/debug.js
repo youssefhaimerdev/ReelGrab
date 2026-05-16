@@ -1,88 +1,61 @@
-/**
- * Debug endpoint — shows raw API response
- * Visit: /api/debug?url=YOUR_REEL_URL
- * Remove this file once the parser is fixed.
- */
-
-const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
-
 export default async function handler(req, res) {
   const { url } = req.query;
-  if (!url) return res.json({ error: 'Add ?url=INSTAGRAM_REEL_URL to the request' });
+  if (!url) return res.json({ error: 'Add ?url=REEL_URL' });
 
-  const shortcode = url.match(/instagram\.com\/(?:reel|reels|p|tv)\/([A-Za-z0-9_-]+)/)?.[1];
-  if (!shortcode) return res.json({ error: 'Could not extract shortcode from URL' });
+  const sc = url.match(/instagram\.com\/(?:reel|reels|p|tv)\/([A-Za-z0-9_-]+)/)?.[1];
+  if (!sc) return res.json({ error: 'Bad URL' });
 
-  if (!RAPIDAPI_KEY) return res.json({ error: 'RAPIDAPI_KEY not set in environment variables' });
-
+  const igUrl = `https://www.instagram.com/reel/${sc}/`;
   const results = {};
 
-  // Test 1: instagram-scraper-api2 by herosAPI
+  // Test Cobalt v2
   try {
-    const r = await fetch(
-      `https://instagram-scraper-api2.p.rapidapi.com/v1/post_info?code_or_id_or_url=${encodeURIComponent(shortcode)}`,
-      {
-        headers: {
-          'x-rapidapi-key':  RAPIDAPI_KEY,
-          'x-rapidapi-host': 'instagram-scraper-api2.p.rapidapi.com',
-        },
-        signal: AbortSignal.timeout(10000),
-      }
-    );
-    results.herosAPI = {
-      status: r.status,
-      statusText: r.statusText,
-      body: await r.json().catch(() => 'not JSON'),
-    };
-  } catch (e) {
-    results.herosAPI = { error: e.message };
-  }
-
-  // Test 2: instagram120 — reels endpoint
-  try {
-    const r = await fetch('https://instagram120.p.rapidapi.com/api/instagram/reels', {
+    const r = await fetch('https://api.cobalt.tools/', {
       method: 'POST',
-      headers: {
-        'Content-Type':    'application/json',
-        'x-rapidapi-key':  RAPIDAPI_KEY,
-        'x-rapidapi-host': 'instagram120.p.rapidapi.com',
-      },
-      body: JSON.stringify({ url: `https://www.instagram.com/reel/${shortcode}/` }),
-      signal: AbortSignal.timeout(10000),
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ url: igUrl }),
+      signal: AbortSignal.timeout(12000),
     });
-    results.instagram120_reels = {
-      status: r.status,
-      body: await r.json().catch(() => 'not JSON'),
-    };
-  } catch (e) {
-    results.instagram120_reels = { error: e.message };
-  }
+    results.cobalt_v2 = { status: r.status, body: await r.json().catch(() => 'not json') };
+  } catch (e) { results.cobalt_v2 = { error: e.message }; }
 
-  // Test 3: instagram120 — posts endpoint (the one you subscribed to)
+  // Test Cobalt v1
   try {
-    const r = await fetch('https://instagram120.p.rapidapi.com/api/instagram/posts', {
+    const r = await fetch('https://co.wuk.sh/api/json', {
       method: 'POST',
-      headers: {
-        'Content-Type':    'application/json',
-        'x-rapidapi-key':  RAPIDAPI_KEY,
-        'x-rapidapi-host': 'instagram120.p.rapidapi.com',
-      },
-      body: JSON.stringify({ url: `https://www.instagram.com/reel/${shortcode}/` }),
-      signal: AbortSignal.timeout(10000),
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ url: igUrl }),
+      signal: AbortSignal.timeout(12000),
     });
-    results.instagram120_posts_with_url = {
-      status: r.status,
-      body: await r.json().catch(() => 'not JSON'),
-    };
-  } catch (e) {
-    results.instagram120_posts_with_url = { error: e.message };
-  }
+    results.cobalt_v1 = { status: r.status, body: await r.json().catch(() => 'not json') };
+  } catch (e) { results.cobalt_v1 = { error: e.message }; }
 
-  return res.json({
-    shortcode,
-    testedUrl: url,
-    keySet: !!RAPIDAPI_KEY,
-    keyPrefix: RAPIDAPI_KEY?.slice(0, 8) + '...',
-    results,
-  });
+  // Test allorigins proxy → embed parse
+  try {
+    const embedUrl = `https://www.instagram.com/reel/${sc}/embed/captioned/`;
+    const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(embedUrl)}`, {
+      signal: AbortSignal.timeout(12000),
+    });
+    const j = await r.json();
+    const html = j?.contents ?? '';
+    const hasVideo = /"video_url"/.test(html) || /\.mp4/.test(html);
+    results.allorigins_embed = {
+      status: r.status,
+      htmlLength: html.length,
+      hasVideoUrl: hasVideo,
+      // show first 800 chars to see what came back
+      preview: html.slice(0, 800),
+    };
+  } catch (e) { results.allorigins_embed = { error: e.message }; }
+
+  // Test SaveFrom
+  try {
+    const r = await fetch(`https://worker.sf-tools.com/savefrom.php?sf_url=${encodeURIComponent(igUrl)}&lang=en`, {
+      headers: { 'Origin': 'https://en.savefrom.net', 'Referer': 'https://en.savefrom.net/' },
+      signal: AbortSignal.timeout(12000),
+    });
+    results.savefrom = { status: r.status, body: await r.json().catch(async () => await r.text().catch(() => 'error')) };
+  } catch (e) { results.savefrom = { error: e.message }; }
+
+  return res.json({ shortcode: sc, results });
 }
