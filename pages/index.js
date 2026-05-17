@@ -103,6 +103,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [isSetupError, setIsSetupError] = useState(false);
 
   const inputRef = useRef(null);
   const resultRef = useRef(null);
@@ -116,6 +117,7 @@ export default function Home() {
     setLoading(true);
     setError(null);
     setResult(null);
+    setIsSetupError(false);
 
 
     try {
@@ -263,10 +265,23 @@ export default function Home() {
             {/* ── RESULT ───────────────────────────────────────────────── */}
             <div ref={resultRef} className="result-area" aria-live="polite">
               {error && (
-                <div className="error-box" role="alert">
-                  <IconAlert />
-                  <span>{error}</span>
-                </div>
+                isSetupError ? (
+                  <div className="setup-box" role="alert">
+                    <div className="setup-box__title">⚙️ One-time setup — 60 seconds</div>
+                    <ol>
+                      <li>Open <strong>instagram.com</strong> in Chrome (logged in)</li>
+                      <li>Press <strong>F12</strong> → Application → Cookies → instagram.com</li>
+                      <li>Copy the <strong>sessionid</strong> value</li>
+                      <li>Vercel → Settings → Environment Variables → Add:<br/><code>INSTAGRAM_SESSION</code> = <code>sessionid=PASTE_HERE</code></li>
+                      <li>Deployments → <strong>Redeploy</strong></li>
+                    </ol>
+                  </div>
+                ) : (
+                  <div className="error-box" role="alert">
+                    <IconAlert />
+                    <span>{error}</span>
+                  </div>
+                )
               )}
 
               {result && (
